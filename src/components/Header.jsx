@@ -13,6 +13,29 @@ const Header = () => {
   const [showSearch, setShowSearch] = useState(false)
   const [lang, setLang] = useState('en')
 
+  // Close sitemap when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openSitemap && !event.target.closest('.sitemap-container')) {
+        setOpenSitemap(false)
+      }
+    }
+    
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape' && openSitemap) {
+        setOpenSitemap(false)
+      }
+    }
+
+    document.addEventListener('click', handleClickOutside)
+    document.addEventListener('keydown', handleEscapeKey)
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
+      document.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [openSitemap])
+
   useEffect(() => {
     document.documentElement.style.fontSize = `${fontSize}px`
     localStorage.setItem('fontSize', String(fontSize))
@@ -62,25 +85,37 @@ const Header = () => {
             <button onClick={() => setIsBw(v => !v)} className="w-7 h-7 rounded-full border flex items-center justify-center bg-white text-black" title="Toggle black & white theme" aria-pressed={isBw}>
               ◐
             </button>
-            {/* Sitemap mega menu */}
-            <div className="relative" onMouseEnter={() => setOpenSitemap(true)} onMouseLeave={() => setOpenSitemap(false)}>
-              <button className="px-2 py-1 rounded hover:bg-gray-200">Sitemap</button>
+            {/* Sitemap mega menu - Click to toggle */}
+            <div className="relative sitemap-container">
+              <button 
+                className="px-2 py-1 rounded hover:bg-gray-200 cursor-pointer"
+                onClick={() => setOpenSitemap(!openSitemap)}
+                aria-expanded={openSitemap}
+                aria-haspopup="true"
+              >
+                Sitemap
+              </button>
               {openSitemap && (
-                <div className="absolute left-0 top-full mt-2 w-[min(96vw,1000px)] bg-white border rounded-lg shadow-2xl z-50 p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <ul className="md:col-span-2 grid grid-cols-2 gap-2 max-h-[60vh] overflow-auto pr-2">
-                      {sitemapLinks.map((item, idx) => (
-                        <li key={idx}>
-                          <a href="#" className="block px-2 py-1 rounded text-gray-800 hover:bg-black hover:text-white text-sm">
-                            {item}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="hidden md:block">
-                      <img src="/assets/emblem-dark.png" alt="Emblem" className="w-full h-40 object-contain" onError={(e) => { e.target.style.display = 'none' }} />
-                    </div>
+                <div className="absolute left-0 top-full mt-2 w-[min(90vw,650px)] bg-white border rounded-lg shadow-2xl z-50 p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-base font-semibold text-gray-800">Site Navigation</h3>
+                    <button 
+                      onClick={() => setOpenSitemap(false)}
+                      className="text-gray-500 hover:text-gray-700 text-lg font-bold ml-2"
+                      aria-label="Close sitemap"
+                    >
+                      ×
+                    </button>
                   </div>
+                  <ul className="grid grid-cols-2 lg:grid-cols-3 gap-1 max-h-[50vh] overflow-auto">
+                    {sitemapLinks.map((item, idx) => (
+                      <li key={idx}>
+                        <a href="#" className="block px-2 py-1 rounded text-gray-700 hover:bg-blue-600 hover:text-white text-sm transition-colors">
+                          {item}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
