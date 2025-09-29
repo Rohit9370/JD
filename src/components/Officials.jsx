@@ -96,22 +96,49 @@ const Officials = () => {
     </div>
   )
 
+
   return (
     <section className="py-12 bg-white">
       <div className="w-full px-8">
+        <div className="mb-6 text-center">
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Our Officials</h2>
+          <p className="text-gray-600">Leadership of Maharashtra's Higher Education Department</p>
+        </div>
+        
         {error && (
           <div className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">{error}</div>
         )}
+        
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
-            {Array.from({ length: 4 }).map((_, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10 justify-center">
+            {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="h-[260px] bg-gray-100 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 justify-center gap-6 mb-10">
             {officials.map((official, index) => (
-              <OfficialCard key={index} official={official} />
+              <div 
+                key={index} 
+                className="group bg-white rounded-lg shadow-lg p-4 text-center hover:shadow-xl transition-shadow duration-300"
+              >
+                <div className="relative mx-auto mb-3 overflow-hidden rounded-lg bg-white w-[150px] h-[150px] flex items-center justify-center">
+                  <img
+                    src={official.image}
+                    alt={official.name}
+                    className="max-w-full max-h-full object-contain transition-transform duration-300 ease-out group-hover:scale-110"
+                    onError={(e) => {
+                      e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmM2Y0ZjYiLz48cGF0aCBkPSJNNzAgODBoNjB2NDBINzBWNzB6IiBmaWxsPSIjZDFkNWRiIi8+PHRleHQgeD0iMTAwIiB5PSIxMDUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2Nzc0ODMiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0Ij5JbWFnZTwvdGV4dD48L3N2Zz4='
+                    }}
+                  />
+                </div>
+                <h3 className="text-base font-semibold text-gray-700 mb-1">
+                  {official.name}
+                </h3>
+                <p className="text-sm text-gray-900 whitespace-pre-line">
+                  {official.designation}
+                </p>
+              </div>
             ))}
           </div>
         )}
