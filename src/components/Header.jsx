@@ -157,10 +157,10 @@ const Header = () => {
       </div>
 
       {/* Main Header */}
-      <header className="border-2  bg-white w-full">
+      <header className="border-2   w-full ">
         {/* Top Header with Emblems and Title */}
         <div className="w-full py-4 bg-white">
-          <div className="flex items-center justify-around px-8">
+          <div className="flex flex-wrap items-center justify-around px-10 md:px-8  gap-4 md:gap-2 hover:shadow-lg transition-shadow duration-300">
             {/* Left - Government Emblem */}
             <div className="flex items-center">
               <img 
@@ -174,7 +174,7 @@ const Header = () => {
             </div>
 
             {/* Center - Government Title */}
-            <div className="text-center flex-1 mx-8">
+            <div className="text-center  mx-8">
               <h1 className="text-5xl lg:text-3xl font-bold text-black leading-tight mb-2">
                 Government of Maharashtra
               </h1>
@@ -187,7 +187,7 @@ const Header = () => {
             </div>
 
             {/* Right - Satyamev Jayate Emblem */}
-            <div className="flex flex-col items-center object-fit">
+            <div className="flex flex-col items-center object-fit max-h-24">
               <img 
                 src="https://commons.wikimedia.org/wiki/File:Ashok_Emblem_svg.svg" 
                 alt="Satyamev Jayate" 
@@ -223,7 +223,7 @@ const Header = () => {
 <li><a href="#scholarship" className="block px-6 py-4 text-white font-semibold hover:bg-white/10 transition-colors border-r border-white/10">Scholarships</a></li>
 <li><a href="#hostel" className="block px-6 py-4 text-white font-semibold hover:bg-white/10 transition-colors border-r border-white/10">Hostel</a></li>
               <li className="relative group">
-<a href="#downloads" className="block px-6 py-4 text-white font-semibold hover:bg-white/10 transition-colors flex items-center">
+<a href="#downloads" className="block px-6 py-4 text-white font-semibold hover:bg-white/10 transition-colors border-r border-white/10 flex items-center">
                   Downloads
                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -235,6 +235,7 @@ const Header = () => {
                   <a href="#useful-forms" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 text-sm">USEFUL FORMS</a>
                 </div>
               </li>
+<li><a href="/admin" className="block px-6 py-4 text-white font-semibold hover:bg-white/10 transition-colors">Admin</a></li>
             </ul>
           
           {/* Mobile menu toggle */}

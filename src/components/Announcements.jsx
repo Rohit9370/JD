@@ -1,67 +1,45 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { listenToUpdates, listenToHelp, listenToImportantLinks } from '../lib/firebase'
 
 const Announcements = () => {
   const [activeTab, setActiveTab] = useState('latest')
-  
-  const announcements = [
-    {
-      id: 1,
-      title: "Regarding 55% reservation (instead of 50%) for girls in the state for higher education",
-      date: "17/06/2025",
-      category: "Reservation Policy",
-      priority: "high",
-      description: "Important notification regarding increased reservation percentage for girls in higher education institutions across Maharashtra."
-    },
-    {
-      id: 2,
-      title: "Regarding the organization of the curriculum and examination for the Departmental Post-Service and Supervisory Examination 2025",
-      date: "12/06/2025",
-      category: "Examinations",
-      priority: "medium",
-      description: "Guidelines and schedule for the upcoming departmental examinations under the Directorate of Higher Education."
-    },
-    {
-      id: 3,
-      title: "Regarding college registration for the Centralized Admission Process (CAP) for professional courses",
-      date: "14/05/2025",
-      category: "Admissions",
-      priority: "high",
-      description: "Important information about CAP registration for professional courses under the jurisdiction of the Directorate of Higher Education for the academic year 2025-26."
-    },
-    {
-      id: 4,
-      title: "Notification Regarding Admission For Art, Science and Commerce Courses Under Jammu & Kashmir Migrant Quota",
-      date: "12/05/2025",
-      category: "Admissions",
-      priority: "medium",
-      description: "Special admission notification for Jammu & Kashmir migrant students for Art, Science and Commerce courses."
-    },
-    {
-      id: 5,
-      title: "M-SET for the states of Maharashtra and Goa",
-      date: "24/01/2025",
-      category: "Examinations",
-      priority: "medium",
-      description: "Maharashtra State Eligibility Test (M-SET) notification for the states of Maharashtra and Goa."
-    },
-    {
-      id: 6,
-      title: "Bharatiya Sanvidhan Gaurav Mahostav",
-      date: "12/02/2025",
-      category: "Events",
-      priority: "low",
-      description: "Celebration of the Indian Constitution - Bharatiya Sanvidhan Gaurav Mahostav program details."
-    }
+  const [updates, setUpdates] = useState([])
+  const [help, setHelp] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [links, setLinks] = useState([])
+
+  // Local quick services remain static
+  const quickServices = [
+    { name: 'Online Admissions', icon: '🎓', link: '#admissions' },
+    { name: 'Student Portal', icon: '👨‍🎓', link: '#portal' },
+    { name: 'College Affiliation', icon: '🏫', link: '#affiliation' },
+    { name: 'Examination Results', icon: '📊', link: '#results' },
+    { name: 'Scholarship Portal', icon: '💰', link: '#scholarships' },
+    { name: 'Grievance Redressal', icon: '📝', link: '#grievance' }
   ]
 
-  const quickServices = [
-    { name: "Online Admissions", icon: "🎓", link: "#admissions" },
-    { name: "Student Portal", icon: "👨‍🎓", link: "#portal" },
-    { name: "College Affiliation", icon: "🏫", link: "#affiliation" },
-    { name: "Examination Results", icon: "📊", link: "#results" },
-    { name: "Scholarship Portal", icon: "💰", link: "#scholarships" },
-    { name: "Grievance Redressal", icon: "📝", link: "#grievance" }
-  ]
+  useEffect(() => {
+    const items = []
+    // Subscribe to help info changes
+    const offHelp = listenToHelp((data) => setHelp(data))
+    // Subscribe to important links
+    const offLinks = listenToImportantLinks((arr) => setLinks(arr))
+
+    // Subscribe to updates (existing + new)
+    const off = listenToUpdates((item) => {
+      items.push(item)
+      // Sort by createdAt desc (may be null if not yet set)
+      items.sort((a, b) => ((b.createdAt || 0) - (a.createdAt || 0)))
+      setUpdates([...items])
+      setLoading(false)
+    })
+
+    return () => {
+      try { if (typeof off === 'function') off() } catch {}
+      try { if (typeof offHelp === 'function') offHelp() } catch {}
+      try { if (typeof offLinks === 'function') offLinks() } catch {}
+    }
+  }, [])
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -72,26 +50,48 @@ const Announcements = () => {
     }
   }
 
-  const filteredAnnouncements = announcements.filter(announcement => {
-    if (activeTab === 'latest') return true
-    if (activeTab === 'admissions') return announcement.category === 'Admissions'
-    if (activeTab === 'exams') return announcement.category === 'Examinations'
-    if (activeTab === 'policy') return announcement.category === 'Reservation Policy'
-    return true
-  })
+  const toCategory = (type) => {
+    if (type === 'admissions') return 'Admissions'
+    if (type === 'examinations') return 'Examinations'
+    if (type === 'policy') return 'Policy'
+    if (type === 'link') return 'Important Link'
+    return 'General'
+  }
+
+  const toPriority = (type) => {
+    if (type === 'admissions' || type === 'examinations') return 'high'
+    if (type === 'policy') return 'medium'
+    return 'low'
+  }
+
+  const formatted = useMemo(() => updates.map(u => ({
+    id: u.id,
+    title: u.title || 'Untitled',
+    date: u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-IN') : '',
+    category: toCategory(u.type),
+    priority: toPriority(u.type),
+    description: u.description || '',
+    url: u.url || null,
+    fileURL: u.fileURL || null,
+  })), [updates])
+
+  const filteredAnnouncements = useMemo(() => {
+    if (activeTab === 'latest') return formatted
+    if (activeTab === 'admissions') return formatted.filter(a => a.category === 'Admissions')
+    if (activeTab === 'exams') return formatted.filter(a => a.category === 'Examinations')
+    if (activeTab === 'policy') return formatted.filter(a => a.category === 'Policy')
+    return formatted
+  }, [formatted, activeTab])
 
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
           {/* Announcements Section */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gov-blue">
-                  Latest Announcements
-                </h2>
+                <h2 className="text-2xl font-bold text-gov-blue">Latest Announcements</h2>
                 <div className="flex items-center text-sm text-gray-500">
                   <span className="animate-pulse w-2 h-2 bg-red-500 rounded-full mr-2"></span>
                   Live Updates
@@ -122,10 +122,16 @@ const Announcements = () => {
 
               {/* Announcements List */}
               <div className="space-y-4 max-h-96 overflow-y-auto">
+                {loading && (
+                  <div className="text-sm text-gray-500">Loading announcements…</div>
+                )}
+                {!loading && filteredAnnouncements.length === 0 && (
+                  <div className="text-sm text-gray-500">No announcements yet.</div>
+                )}
                 {filteredAnnouncements.map((announcement) => (
                   <div
                     key={announcement.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center space-x-2">
@@ -143,25 +149,41 @@ const Announcements = () => {
                     <h3 className="font-semibold text-gov-blue mb-2 leading-tight">
                       {announcement.title}
                     </h3>
-                    <p className="text-sm text-gray-600 line-clamp-2">
-                      {announcement.description}
-                    </p>
-                    <button className="text-xs text-gov-orange hover:underline mt-2">
-                      Read More →
-                    </button>
+                    {announcement.description && (
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {announcement.description}
+                      </p>
+                    )}
+                    <div className="mt-2 flex flex-wrap gap-3">
+                      {announcement.url && (
+                        <a
+                          className="text-xs text-gov-orange hover:underline"
+                          href={announcement.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Read More →
+                        </a>
+                      )}
+                      {announcement.fileURL && (
+                        <a
+                          className="text-xs text-blue-600 hover:underline"
+                          href={announcement.fileURL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Download Attachment
+                        </a>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-6 text-center">
-                <button className="bg-gov-blue text-white px-6 py-2 rounded-lg hover:bg-blue-800 transition-colors">
-                  View All Announcements
-                </button>
-              </div>
             </div>
           </div>
 
-          {/* Quick Services Sidebar */}
+          {/* Quick Services + Help Sidebar */}
           <div className="space-y-6">
             {/* Quick Services */}
             <div className="bg-white rounded-lg shadow-lg p-6">
@@ -184,51 +206,41 @@ const Announcements = () => {
               </div>
             </div>
 
-            {/* Important Links */}
+            {/* Important Links (Admin-managed) */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-xl font-bold text-gov-blue mb-4">Important Links</h3>
-              <ul className="space-y-3">
-                <li>
-                  <a href="#" className="flex items-center text-sm text-gray-700 hover:text-gov-blue">
-                    <span className="w-2 h-2 bg-gov-orange rounded-full mr-3"></span>
-                    Ministry of Education, GoI
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="flex items-center text-sm text-gray-700 hover:text-gov-blue">
-                    <span className="w-2 h-2 bg-gov-orange rounded-full mr-3"></span>
-                    UGC Guidelines
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="flex items-center text-sm text-gray-700 hover:text-gov-blue">
-                    <span className="w-2 h-2 bg-gov-orange rounded-full mr-3"></span>
-                    NAAC Accreditation
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="flex items-center text-sm text-gray-700 hover:text-gov-blue">
-                    <span className="w-2 h-2 bg-gov-orange rounded-full mr-3"></span>
-                    RTI Information
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="flex items-center text-sm text-gray-700 hover:text-gov-blue">
-                    <span className="w-2 h-2 bg-gov-orange rounded-full mr-3"></span>
-                    Public Grievances
-                  </a>
-                </li>
-              </ul>
+              {links.length === 0 ? (
+                <div className="text-sm text-gray-500">No links available.</div>
+              ) : (
+                <ul className="space-y-3">
+                  {links.map((l) => (
+                    <li key={l.id}>
+                      <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex items-center text-sm text-gray-700 hover:text-gov-blue">
+                        <span className="w-2 h-2 bg-gov-orange rounded-full mr-3"></span>
+                        {l.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
-            {/* Contact Info */}
+            {/* Help Information from Admin */}
             <div className="bg-gradient-to-br from-gov-blue to-blue-600 text-white rounded-lg p-6">
               <h3 className="text-lg font-bold mb-3">Need Help?</h3>
-              <div className="space-y-2 text-sm">
-                <p>📞 Helpline: 1800-XXX-XXXX</p>
-                <p>⏰ Mon-Fri: 9:00 AM - 6:00 PM</p>
-                <p>✉️ support@dhepune.gov.in</p>
-              </div>
+              {help ? (
+                <div className="space-y-2 text-sm">
+                  <p>📞 Helpline: {help.helpline}</p>
+                  <p>⏰ {help.hours}</p>
+                  <p>✉️ {help.email}</p>
+                </div>
+              ) : (
+                <div className="space-y-2 text-sm opacity-80">
+                  <p>📞 Helpline: 1800-XXX-XXXX</p>
+                  <p>⏰ Mon-Fri: 9:00 AM - 6:00 PM</p>
+                  <p>✉️ support@dhepune.gov.in</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
